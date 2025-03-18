@@ -5,9 +5,15 @@ function App() {
   const handleCheckout = () => {
     axios.post("http://localhost:5000/create-payment", {
       amount: 500, 
-      currency: 'usd'
+      currency: 'EUR'
     })
-    .then(response => console.log(response))
+    .then((response) => {console.log(response) 
+      const redirectUrl = response.data.paymentUrl
+      if (redirectUrl) {
+        window.location.replace(redirectUrl)
+      }
+
+    })
     .catch(error => console.error("Error:", error.response || error.message));
   }
 
