@@ -46,8 +46,8 @@ async function run() {
         currency: productInfo.currency,
         tran_id: txnId,
         success_url: "http://localhost:5000/success-payment",
-        fail_url: "http://yoursite.com/fail.php",
-        cancel_url: "http://yoursite.com/cancel.php",
+        fail_url: "http://localhost:5000/fail",
+        cancel_url: "http://localhost:5000/cancel",
         cus_name: "Customer Name",
         cus_email: "cust@yahoo.com",
         cus_add1: "Dhaka",
@@ -126,7 +126,14 @@ async function run() {
         "sucess data-----------------------------------",
         successData
       );
-      res.send(successData.data);
+      res.redirect("http://localhost:5173/success");
+    });
+
+    app.post("/fail", async (req, res) => {
+      res.redirect("http://localhost:5173/fail");
+    });
+    app.post("/cancel", async (req, res) => {
+      res.redirect("http://localhost:5173/cancel");
     });
 
     app.listen(port, () => {
