@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //The express.urlencoded() middleware in ExpressJS is used to handle form submissions sent in application/x-www-form-urlencoded format.
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { default: axios, post } = require("axios");
 const uri = `mongodb+srv://${process.env.DB_User}:${process.env.DB_Pass}@cluster0.t241ufd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-   // await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
@@ -38,13 +38,13 @@ async function run() {
 
     app.post("/create-payment", async (req, res) => {
       const productInfo = req.body;
-
+      const txnId = new ObjectId().toString();
       const initiateData = {
         store_id: "rabbi67d7e79e25311",
         store_passwd: "rabbi67d7e79e25311@ssl",
         total_amount: productInfo.amount,
         currency: productInfo.currency,
-        tran_id: "REF123",
+        tran_id: txnId,
         success_url: "http://localhost:5000/success-payment",
         fail_url: "http://yoursite.com/fail.php",
         cancel_url: "http://yoursite.com/cancel.php",
@@ -87,11 +87,11 @@ async function run() {
         },
       });
 
-      //console.log(response);
+      console.log(response);
 
       const SaveData = {
         cus_name: "Dummy",
-        payment_Id: "HJLIRHJ",
+        payment_Id: txnId,
         amount: productInfo.amount,
         status: "Pending",
       };
@@ -105,9 +105,27 @@ async function run() {
       }
     });
 
-    app.post("/success-payment", (req, res) => {
+    app.post("/success-payment", async (req, res) => {
       const successData = req.body;
-      console.log("sucess data", successData);
+      if (successData.status !== "VALID") {
+        throw new Error("Unauthorized or Invalid Payments");
+      }
+      const query = {
+        payment_Id: successData.tran_id,
+      };
+
+      const update = {
+        $set: {
+          status: "Success",
+        },
+      };
+
+      const updateData = await payment.updateOne(query, update);
+
+      console.log(
+        "sucess data-----------------------------------",
+        successData
+      );
       res.send(successData.data);
     });
 
@@ -116,7 +134,7 @@ async function run() {
     });
   } finally {
     // Ensures that the client will close when you finish/error
-   // await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
